@@ -11,22 +11,22 @@ import UIKit
 
 let EMPTY_STRING = ""
 
-struct RSSVideoItem {
+struct PodcastItem {
+    var identifier: UUID
     var itemTitle: String
     var itemDescription: String
-    var itemLink: String
     var itemPubDate: String
     var itemDuration: String
-    var itemVideoURL: String
-    var itemAudioURL: String
+    var itemURL: String
     var itemImage: String
     var itemAuthor: String
+    var itemIsDownloaded: Bool
 }
 
 class FeedParser: NSObject, XMLParserDelegate {
     
     
-    private var rssItems: [RSSVideoItem] = []
+    private var rssItems: [PodcastItem] = []
     private var currentElement = EMPTY_STRING
     private var currentTitle: String = EMPTY_STRING {
         didSet {
@@ -58,11 +58,6 @@ class FeedParser: NSObject, XMLParserDelegate {
             currentVideoURL = currentVideoURL.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
         }
     }
-    private var currentAudioURL: String = EMPTY_STRING {
-        didSet {
-            currentVideoURL = currentVideoURL.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
-        }
-    }
     private var currentImage: String = EMPTY_STRING {
         didSet {
             currentImage = currentImage.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
@@ -70,14 +65,14 @@ class FeedParser: NSObject, XMLParserDelegate {
     }
     private var currentAuthor: String = EMPTY_STRING {
         didSet {
-            currentImage = currentImage.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+            currentAuthor = currentAuthor.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
         }
     }
-    private var parserComplitionHandler: (([RSSVideoItem]) -> Void)?
     
-    func parseFeed(url: String, complitionHandler: (([RSSVideoItem]) -> Void)?) {
-        self.parserComplitionHandler = complitionHandler
-        
+    var itemDownloadedHandler: ((PodcastItem) -> Void)?
+    var parserDidEndDocumentHandler: (() -> Void)?
+    
+    func parseFeed(url: String) {
         let request = URLRequest(url: URL(string: url)!)
         let urlSession = URLSession.shared
         let task = urlSession.dataTask(with: request) { (data, response, error) in
@@ -93,12 +88,11 @@ class FeedParser: NSObject, XMLParserDelegate {
         }
         task.resume()
     }
-    
+
     func parser(_ parser: XMLParser, didStartElement elementName: String, namespaceURI: String?, qualifiedName qName: String?, attributes attributeDict: [String : String] = [:]) {
         currentElement = elementName
         if currentElement == "item" {
             currentTitle = EMPTY_STRING
-            currentLink = EMPTY_STRING
             currentImage = EMPTY_STRING
             currentPubDate = EMPTY_STRING
             currentDescription = EMPTY_STRING
@@ -114,7 +108,7 @@ class FeedParser: NSObject, XMLParserDelegate {
             }
         } else if currentElement == "enclosure" {
             if let url = attributeDict["url"] {
-                currentAudioURL = url
+                currentVideoURL = url
             }
         }
     }
@@ -123,7 +117,6 @@ class FeedParser: NSObject, XMLParserDelegate {
         switch currentElement {
             case "title" : currentTitle += string
             case "itunes:summary" : currentDescription += string
-            case "link" : currentLink += string
             case "pubDate" : currentPubDate += string
             case "itunes:image" : currentImage += string
             case "itunes:duration" : currentDuration += string
@@ -134,13 +127,13 @@ class FeedParser: NSObject, XMLParserDelegate {
     
     func parser(_ parser: XMLParser, didEndElement elementName: String, namespaceURI: String?, qualifiedName qName: String?) {
         if elementName == "item" {
-            let rssItem = RSSVideoItem(itemTitle: currentTitle, itemDescription: currentDescription, itemLink: currentLink, itemPubDate: currentPubDate, itemDuration: currentDuration, itemVideoURL: currentVideoURL, itemAudioURL: currentAudioURL, itemImage: currentImage, itemAuthor: currentAuthor)
-            self.rssItems.append(rssItem)
+            let rssItem = PodcastItem(identifier:UUID(), itemTitle: currentTitle, itemDescription: currentDescription, itemPubDate: currentPubDate, itemDuration: currentDuration, itemURL: currentVideoURL, itemImage: currentImage, itemAuthor: currentAuthor, itemIsDownloaded: false)
+            itemDownloadedHandler?(rssItem)
         }
     }
     
     func parserDidEndDocument(_ parser: XMLParser) {
-        parserComplitionHandler?(rssItems)
+        parserDidEndDocumentHandler?()
     }
     
     func parser(_ parser: XMLParser, parseErrorOccurred parseError: Error) {

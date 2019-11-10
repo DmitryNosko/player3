@@ -26,7 +26,7 @@ class AudioPlayerViewController: UIViewController {
     @IBOutlet weak var totalLenghtLabel: UILabel!
     
     let activityIndicatorView: UIActivityIndicatorView = {
-        let aiv = UIActivityIndicatorView(style: .gray)
+        let aiv = UIActivityIndicatorView(activityIndicatorStyle: .gray)
         aiv.translatesAutoresizingMaskIntoConstraints = false
         aiv.startAnimating()
         return aiv
@@ -87,7 +87,7 @@ class AudioPlayerViewController: UIViewController {
         let audioSession = AVAudioSession.sharedInstance()
         
         do {
-            try audioSession.setCategory(.playback)
+            try audioSession.setCategory(AVAudioSessionCategoryPlayback)
         } catch {
             
         }
@@ -103,7 +103,7 @@ class AudioPlayerViewController: UIViewController {
     @IBAction func restartAction(_ sender: UIButton) {
         sender.pulsate()
         if ((player.error == nil)) {
-            player.seek(to: CMTime.zero)
+            player.seek(to: kCMTimeZero)
             player.play()
         }
     }

@@ -31,7 +31,7 @@ class PodcastTableViewCell: UITableViewCell {
         return imgView
     }()
     
-    var item: RSSVideoItem! {
+    var item: PodcastItem! {
         didSet {
             videoTitle = item.itemTitle
             videoImageView.loadImageUsingURLString(string: item.itemImage)
@@ -43,7 +43,7 @@ class PodcastTableViewCell: UITableViewCell {
         self.videoImageView.image = nil
     }
     
-    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
+    override init(style: UITableViewCellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         self.addSubview(videoImageView)
         self.addSubview(videoTitleLabel)

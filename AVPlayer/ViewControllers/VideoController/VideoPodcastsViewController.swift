@@ -14,33 +14,42 @@ class VideoPodcastsViewController: UITableViewController {
     let TED_TALKS_VIDEO_RESOURCE_URL: String = "https://feeds.feedburner.com/tedtalks_video"
     let VIDEO_CELL_IDENTIFIER: String = "Cell"
     
-    private var videoItems: [RSSVideoItem]?
+    private var displayedVideoItems: [PodcastItem]?
+    private var videoItem: PodcastItem?
+    let feedParser = FeedParser()
+    let coreDataManager = CoreDataManager()
     
     override func viewDidLoad() {
         super.viewDidLoad()
         self.navigationController?.title = VPVC_TITLE
-        fetchData()
         setUpTableView()
         setUpNavigationItem()
-    }
-
-    private func fetchData() {
-        let feedParser = FeedParser()
-        feedParser.parseFeed(url: TED_TALKS_VIDEO_RESOURCE_URL) { (videoItems) in
-            self.videoItems = videoItems
-            OperationQueue.main.addOperation {
-                self.tableView.reloadSections(IndexSet(integer: 0), with: .left)
+        displayedVideoItems = [PodcastItem]()
+        
+        feedParser.itemDownloadedHandler = { (videoItem) in
+            self.addParsedFeedItemToFeeds(item: videoItem)
+            DispatchQueue.main.async {
+                self.tableView.reloadData()
             }
+        }
+        
+        coreDataManager.deleteAllFeedItems()
+        feedParser.parseFeed(url: TED_TALKS_VIDEO_RESOURCE_URL)
+        
+        feedParser.parserDidEndDocumentHandler = {() in
+            print("parserDidEndDocumentHandler")
+            self.coreDataManager.deletedItems()
         }
     }
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(true)
     }
+    
     // MARK: - Table view data source
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        guard let videoItems = videoItems else {
+        guard let videoItems = displayedVideoItems else {
             return 0
         }
         return videoItems.count
@@ -49,7 +58,7 @@ class VideoPodcastsViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: VIDEO_CELL_IDENTIFIER, for: indexPath) as! PodcastTableViewCell
         
-        if let item = videoItems?[indexPath.row] {
+        if let item = displayedVideoItems?[indexPath.row] {
             cell.item = item
         }
         cell.layoutSubviews()
@@ -62,9 +71,9 @@ class VideoPodcastsViewController: UITableViewController {
         return true
     }
     
-    override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
+    override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
         if editingStyle == .delete {
-                videoItems?.remove(at: indexPath.row)
+                displayedVideoItems?.remove(at: indexPath.row)
                 tableView.deleteRows(at: [indexPath], with: .left)
                 tableView.reloadData()
         }
@@ -88,7 +97,7 @@ class VideoPodcastsViewController: UITableViewController {
                         destinationVC.podcastPubDate = item.itemPubDate
                         destinationVC.podcastDuration = item.itemDuration
                         destinationVC.podcastAuthor = item.itemAuthor
-                        destinationVC.podcastURL = item.itemVideoURL
+                        destinationVC.podcastURL = item.itemURL
                     }
                 }
             }
@@ -98,10 +107,7 @@ class VideoPodcastsViewController: UITableViewController {
     // Mark: - SetUp's
     
     func setUpTableView() {
-        self.tableView.decelerationRate = .normal
-        self.tableView.separatorStyle = .none
         self.tableView.register(PodcastTableViewCell.self, forCellReuseIdentifier: VIDEO_CELL_IDENTIFIER)
-        self.tableView.rowHeight = UITableView.automaticDimension
         self.tableView.estimatedRowHeight = 200
     }
     
@@ -110,8 +116,31 @@ class VideoPodcastsViewController: UITableViewController {
     }
     
     @objc func refreshData() {
-        self.videoItems?.removeAll()
-        fetchData()
+        self.displayedVideoItems?.removeAll()
+        feedParser.parseFeed(url: TED_TALKS_VIDEO_RESOURCE_URL)
+    }
+    
+    //MARK: - Block's
+    
+    func addParsedFeedItemToFeeds(item: PodcastItem) {
+        coreDataManager.addFeedItem(item: item)
+        displayedVideoItems?.append(item)
     }
     
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

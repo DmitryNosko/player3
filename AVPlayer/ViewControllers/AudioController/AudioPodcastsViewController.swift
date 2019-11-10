@@ -13,7 +13,7 @@ let TED_TALKS_AUDIO_RESOURCE_URL: String = "https://feeds.feedburner.com/Hanselm
 let AUDIO_CELL_IDENTIFIER: String = "Cell"
 
 class AudioPodcastsViewController: UITableViewController {
-    private var videoItems: [RSSVideoItem]?
+    private var videoItems: [PodcastItem]?
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -24,13 +24,13 @@ class AudioPodcastsViewController: UITableViewController {
     }
     
     private func fetchData() {
-        let feedParser = FeedParser()
-        feedParser.parseFeed(url: TED_TALKS_AUDIO_RESOURCE_URL) { (videoItems) in
-            self.videoItems = videoItems
-            OperationQueue.main.addOperation {
-                self.tableView.reloadSections(IndexSet(integer: 0), with: .left)
-            }
-        }
+//        let feedParser = FeedParser()
+//        feedParser.parseFeed(url: TED_TALKS_AUDIO_RESOURCE_URL) { (videoItems) in
+//            self.videoItems = videoItems
+//            OperationQueue.main.addOperation {
+//                self.tableView.reloadSections(IndexSet(integer: 0), with: .left)
+//            }
+//        }
     }
     
     // MARK: - Table view data source
@@ -54,11 +54,8 @@ class AudioPodcastsViewController: UITableViewController {
     
     //MARK: - TableViewDelegate
     
-    override func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
-        return true
-    }
     
-    override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
+    override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
         if editingStyle == .delete {
             videoItems?.remove(at: indexPath.row)
             tableView.deleteRows(at: [indexPath], with: .left)
@@ -84,7 +81,7 @@ class AudioPodcastsViewController: UITableViewController {
                         destinationVC.podcastPubDate = item.itemPubDate
                         destinationVC.podcastDuration = item.itemDuration
                         destinationVC.podcastAuthor = item.itemAuthor
-                        destinationVC.podcastURL = item.itemAudioURL
+                        destinationVC.podcastURL = item.itemURL
                     }
                 }
             }
@@ -94,10 +91,8 @@ class AudioPodcastsViewController: UITableViewController {
     // Mark: - SetUp's
     
     func setUpTableView() {
-        self.tableView.decelerationRate = .normal
         self.tableView.separatorStyle = .none
         self.tableView.register(PodcastTableViewCell.self, forCellReuseIdentifier: AUDIO_CELL_IDENTIFIER)
-        self.tableView.rowHeight = UITableView.automaticDimension
         self.tableView.estimatedRowHeight = 200
     }
     

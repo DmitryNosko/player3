@@ -57,7 +57,7 @@ class UserPodcastsViewController: UITableViewController {
         return true
     }
     
-    override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
+    override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
         if editingStyle == .delete {
             podcasts.remove(at: indexPath.row)
             tableView.deleteRows(at: [indexPath], with: .left)
@@ -109,10 +109,10 @@ class UserPodcastsViewController: UITableViewController {
     //MARK: - SetUp's
     
     func setUpTableView() {
-        self.tableView.decelerationRate = .normal
+        //self.tableView.decelerationRate = .normal
         self.tableView.separatorStyle = .none
         self.tableView.register(PodcastTableViewCell.self, forCellReuseIdentifier: VIDEO_CELL_IDENTIFIER)
-        self.tableView.rowHeight = UITableView.automaticDimension
+        //self.tableView.rowHeight = UITableView.automaticDimension
         self.tableView.estimatedRowHeight = 200
     }
 }
